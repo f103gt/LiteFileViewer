@@ -26,11 +26,15 @@ public:
 public slots:
 
     void onOpenButtonClicked();
+    void closeCurrentTab();
 
 private:
     Ui::MainWindow *ui;
     QMap<QString, FileViewer*> viewers;
+    double zoomLevel = 1.0;
     QGraphicsView*getCurrentTabGraphicsView() const;
     QLabel* getCurrentTabLabel() const;
+    void checkTabCount() const;
+
 };
 #endif // MAINWINDOW_H

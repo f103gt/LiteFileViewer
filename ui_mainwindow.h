@@ -10,19 +10,14 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
-#include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
-#include <QtWidgets/QToolBar>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QSplitter>
 #include <QList>
-#include <QtWidgets/QTreeWidget>
-#include <QtWidgets/QPushButton>
-#include <QtWidgets/QProgressBar>
-#include <QtWidgets/QGraphicsView>
 #include <QtWidgets/QStackedLayout>
 #include <QFileDialog>
+#include <QStackedWidget>
 
 
 QT_BEGIN_NAMESPACE
@@ -31,13 +26,11 @@ class Ui_MainWindow
 {
 public:
     QAction *actionOpen;
-    QAction *actionSave;
     QAction *actionClose;
-    QAction *actionRead;
-    QAction *actionConvert;
-    QAction *actionCompress;
+    QAction *actionRecentFiles;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
+     QVBoxLayout *centerLayout;
     QTabWidget *tabWidget;
     QWidget *tab;
     QWidget *widget;
@@ -45,132 +38,86 @@ public:
     QListWidget *listWidget;
     QMenuBar *menubar;
     QMenu *menuFile;
+    QMenu *menuRecentFiles;
     QStatusBar *statusbar;
-    QToolBar *toolBar;
     QSplitter* splitter;
+    QLabel* welcomeLabel;
+    QStackedWidget* stackedWidget;
+    QLabel *zoomLabel;
+    double zoomLevel;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName("MainWindow");
         MainWindow->resize(800, 600);
-        actionOpen = new QAction(MainWindow);
-        actionOpen->setObjectName("actionOpen");
-        actionSave = new QAction(MainWindow);
-        actionSave->setObjectName("actionSave");
-        actionClose = new QAction(MainWindow);
-        actionClose->setObjectName("actionClose");
-        actionRead = new QAction(MainWindow);
-        actionRead->setObjectName("actionRead");
-        QIcon icon;
-        icon.addFile(QString::fromUtf8(":/image/read-file.png"), QSize(), QIcon::Normal, QIcon::Off);
-        actionRead->setIcon(icon);
-        actionRead->setMenuRole(QAction::NoRole);
-        actionConvert = new QAction(MainWindow);
-        actionConvert->setObjectName("actionConvert");
 
-        QIcon icon1;
-        icon1.addFile(QString::fromUtf8(":/image/file-converter.png"), QSize(), QIcon::Normal, QIcon::Off);
-        actionConvert->setIcon(icon1);
-        actionConvert->setMenuRole(QAction::NoRole);
-        actionConvert->setShortcutVisibleInContextMenu(false);
-        actionCompress = new QAction(MainWindow);
-        actionCompress->setObjectName("actionCompress");
-
-        QIcon icon2;
-        icon2.addFile(QString::fromUtf8(":/image/compress-file.png"), QSize(), QIcon::Normal, QIcon::Off);
-        actionCompress->setIcon(icon2);
-        actionCompress->setMenuRole(QAction::NoRole);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName("centralwidget");
-        centralwidget->setAutoFillBackground(true);
         verticalLayout = new QVBoxLayout(centralwidget);
         verticalLayout->setObjectName("verticalLayout");
+
+        actionOpen = new QAction(MainWindow);
+        actionOpen->setObjectName("actionOpen");
+        actionClose = new QAction(MainWindow);
+        actionClose->setObjectName("actionClose");
+        actionRecentFiles = new QAction(MainWindow);
+        actionRecentFiles->setObjectName("actionRecentFiles");
+
+        welcomeLabel = new QLabel("Welcome! Open a file to get started or use the menu options.");
+        welcomeLabel->setObjectName("welcomeLabel");
+        welcomeLabel->setAlignment(Qt::AlignCenter);
+
+        zoomLabel = new QLabel(MainWindow);
+        zoomLabel->setObjectName("zoomLabel");
+        zoomLabel->setText("Zoom: 100%");
+        zoomLabel->setVisible(false);
+        verticalLayout->addWidget(zoomLabel);
+
+        zoomLabel->setText(QString("Zoom: %1%").arg(zoomLevel * 100));
+        zoomLabel->update();
+
+        verticalLayout->addWidget(welcomeLabel);
+
         tabWidget = new QTabWidget(centralwidget);
+        tabWidget->setObjectName("tabWidget");
 
+        stackedWidget = new QStackedWidget(centralwidget);
+        stackedWidget->addWidget(welcomeLabel);
+        stackedWidget->addWidget(tabWidget);
 
+        centerLayout = new QVBoxLayout();
+        centerLayout->addWidget(stackedWidget);
 
-        tab = new QWidget();
-        tab->setObjectName("tab");
-
-        QGridLayout *gridLayout = new QGridLayout(tab);
-        gridLayout->setObjectName("gridLayout");
-
-
-        // Create a new QWidget to hold the label and list widget
-        QWidget *listWidgetContainer = new QWidget();
-        QVBoxLayout *listLayout = new QVBoxLayout();
-
-        QLabel *listLabel = new QLabel("Recent Files");
-        QListWidget *listWidget = new QListWidget();
-        listWidget->setObjectName("listWidget");
-        listWidget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-
-        listLayout->addWidget(listLabel);
-        listLayout->addWidget(listWidget);
-        listWidgetContainer->setLayout(listLayout);
-
-        QWidget *buttonWidget = new QWidget();
-        QVBoxLayout *buttonLayout = new QVBoxLayout();
-
-
-        QPushButton* openButton = new QPushButton("Open");
-        openButton->setFixedSize(200, 25);
-        openButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-        //buttonLayout->addStretch();
-        buttonLayout->addWidget(openButton, 0, Qt::AlignCenter); // Align the button to the center
-        buttonLayout->addStretch();
-        buttonWidget->setLayout(buttonLayout);
-
-        QObject::connect(openButton, SIGNAL(clicked()), MainWindow, SLOT(on_openButton_clicked()));
-
-
-        // Add list widget container and button to the grid layout
-        gridLayout->addWidget(listWidgetContainer, 0, 0); // Add list widget container to the first column
-        gridLayout->addWidget(buttonWidget, 0, 1); // Add button to the second column
-
-        // Set the stretch factors for the columns
-        gridLayout->setColumnStretch(0, 1); // First column takes up 1/5 of the width
-        gridLayout->setColumnStretch(1, 4);
-
-
-        tabWidget->addTab(tab, QString("Home"));
-
-        verticalLayout->addWidget(tabWidget);
+        verticalLayout->addLayout(centerLayout);
 
         MainWindow->setCentralWidget(centralwidget);
+
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
-        menubar->setGeometry(QRect(0, 0, 800, 25));
+        MainWindow->setMenuBar(menubar);
+
         menuFile = new QMenu(menubar);
         menuFile->setObjectName("menuFile");
-        MainWindow->setMenuBar(menubar);
-        statusbar = new QStatusBar(MainWindow);
-        statusbar->setObjectName("statusbar");
-        MainWindow->setStatusBar(statusbar);
-        toolBar = new QToolBar(MainWindow);
-        toolBar->setObjectName("toolBar");
-        toolBar->setBaseSize(QSize(0, 0));
-        toolBar->setAllowedAreas(Qt::LeftToolBarArea);
-        toolBar->setIconSize(QSize(40, 50));
-        toolBar->setFloatable(false);
-        MainWindow->addToolBar(Qt::LeftToolBarArea, toolBar);
+        menuFile->setTitle(QCoreApplication::translate("MainWindow", "File", nullptr));
 
-        menubar->addAction(menuFile->menuAction());
+        menuRecentFiles = new QMenu(menuFile);
+        menuRecentFiles->setObjectName("menuRecentFiles");
+        menuRecentFiles->setTitle(QCoreApplication::translate("MainWindow", "Recent Files", nullptr));
+
         menuFile->addAction(actionOpen);
-        menuFile->addAction(actionSave);
         menuFile->addAction(actionClose);
-        toolBar->addAction(actionRead);
-        toolBar->addAction(actionConvert);
-        toolBar->addAction(actionCompress);
+        menuFile->addSeparator();
+        menuFile->addMenu(menuRecentFiles);
+
+        menubar->addMenu(menuFile);
 
         retranslateUi(MainWindow);
 
-        tabWidget->setCurrentIndex(0);
-
-
         QMetaObject::connectSlotsByName(MainWindow);
-    } // setupUi
+    }
+
+
 
     void retranslateUi(QMainWindow *MainWindow)
     {
@@ -179,20 +126,12 @@ public:
 #if QT_CONFIG(shortcut)
         actionOpen->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+O", nullptr));
 #endif // QT_CONFIG(shortcut)
-        actionSave->setText(QCoreApplication::translate("MainWindow", "Save", nullptr));
-#if QT_CONFIG(shortcut)
-        actionSave->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+S", nullptr));
-#endif // QT_CONFIG(shortcut)
         actionClose->setText(QCoreApplication::translate("MainWindow", "Close", nullptr));
 #if QT_CONFIG(shortcut)
         actionClose->setShortcut(QCoreApplication::translate("MainWindow", "Ctrl+W", nullptr));
 #endif // QT_CONFIG(shortcut)
-        actionRead->setText(QCoreApplication::translate("MainWindow", "Read", nullptr));
-        actionConvert->setText(QCoreApplication::translate("MainWindow", "Convert", nullptr));
-        actionCompress->setText(QCoreApplication::translate("MainWindow", "Compress", nullptr));
         tabWidget->setTabText(tabWidget->indexOf(tab), QCoreApplication::translate("MainWindow", "Home", nullptr));
         menuFile->setTitle(QCoreApplication::translate("MainWindow", "File", nullptr));
-        toolBar->setWindowTitle(QCoreApplication::translate("MainWindow", "toolBar", nullptr));
     } // retranslateUi
 
 };

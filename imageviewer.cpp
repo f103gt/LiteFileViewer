@@ -38,9 +38,6 @@ QWidget *ImageViewer::view(const QString &fileName)
     // Set the alignment to center
     view->setAlignment(Qt::AlignCenter);
 
-    // Remove fixed size to allow resizing
-    // view->setFixedSize(pixmap.size());
-
     // Set a minimum size for the view
     view->setMinimumSize(1, 1);
 
