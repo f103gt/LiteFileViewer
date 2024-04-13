@@ -5,6 +5,7 @@
 #include <QGraphicsPixmapItem>
 #include <QList>
 #include "fileviewer.h"
+#include <QObject>
 
 class DecoratedScene: public QGraphicsScene{
     QGraphicsScene* scene;
@@ -23,9 +24,12 @@ public:
 
 class PdfViewer: public FileViewer
 {
+    Q_OBJECT
 public:
     PdfViewer() = default;
-    QWidget* view(const QString& fileName) override;
+public slots:
+   void open(const QString& fileName) override;
+    QWidget* display(QVariant data) override;
 };
 
 #endif // PDFVIEWER_H

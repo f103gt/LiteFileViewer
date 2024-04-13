@@ -3,20 +3,17 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QFileInfo>
 #include <QPainter>
 
 
-QWidget *PdfViewer::view(const QString &fileName)
+void PdfViewer::open(const QString &fileName)
 {
+    QFileInfo fileInfo(fileName);
     auto pdfDocument = new QPdfDocument;
     pdfDocument->load(fileName);
 
-    auto scene = new QGraphicsScene;
-    auto view = new QGraphicsView(scene);
-    DecoratedScene decoratedScene(scene);
-
-    int yOffset = 0;
-    CompositeItem compositeItem;
+    QList<QPixmap> pixmaps;
     for (int i = 0; i < pdfDocument->pageCount(); ++i) {
         QSize imageSize(2400, 3393);
         QImage image = pdfDocument->render(i, imageSize);
@@ -28,6 +25,23 @@ QWidget *PdfViewer::view(const QString &fileName)
         painter.end();
 
         QPixmap pixmap = QPixmap::fromImage(imageWithWhiteBg);
+        pixmaps.append(pixmap);
+    }
+    emit fileOpened(QVariant::fromValue(pixmaps), fileInfo.fileName(),fileInfo.suffix().toLower());
+}
+
+
+
+QWidget* PdfViewer::display(QVariant data)
+{
+    QList<QPixmap> pixmaps = data.value<QList<QPixmap>>();
+    auto scene = new QGraphicsScene;
+    auto view = new QGraphicsView(scene);
+    DecoratedScene decoratedScene(scene);
+
+    int yOffset = 0;
+    CompositeItem compositeItem;
+    for (const QPixmap &pixmap : pixmaps) {
         auto item = new QGraphicsPixmapItem(pixmap);
         item->setPos(0, yOffset);
 
@@ -38,6 +52,7 @@ QWidget *PdfViewer::view(const QString &fileName)
     compositeItem.drawItems(&decoratedScene);
     return view;
 }
+
 
 DecoratedScene::DecoratedScene(QGraphicsScene *scene) :scene(scene){}
 

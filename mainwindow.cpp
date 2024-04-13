@@ -8,6 +8,8 @@
 #include "imageviewer.h"
 #include <QDebug>
 #include <QShortcut>
+#include <QThread>
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -41,6 +43,44 @@ void MainWindow::checkTabCount() const
         ui->stackedWidget->setCurrentWidget(ui->tabWidget);
 }
 
+
+void MainWindow::addTab(QVariant data, const QString &title,const QString& fileExension)
+{
+    QFileInfo fileInfo(title);
+    QString fileExtension = fileInfo.suffix().toLower();
+    QWidget *widget = viewers[fileExension]->display(data);
+    if (widget != nullptr) {
+        QWidget *newTab = new QWidget();
+        QVBoxLayout *layout = new QVBoxLayout(newTab);
+        layout->addWidget(widget);
+
+        ui->tabWidget->addTab(newTab, title);
+    }
+}
+
+
+void MainWindow::onOpenButtonClicked() {
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open File"), "/home",
+                                                    tr("All Files (*)"));
+    if (!fileName.isEmpty()) {
+        QFileInfo fileInfo(fileName);
+        QString fileExtension = fileInfo.suffix().toLower();
+        if (viewers.contains(fileExtension)) {
+            QThread* thread = new QThread;
+            FileViewer* viewer = viewers[fileExtension];
+            viewer->moveToThread(thread);
+            // Adjusting the lambda function to match the signal signature
+            connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
+                this->addTab(data, title, fileExtension);
+            });
+
+            connect(thread, &QThread::finished, viewer, &QObject::deleteLater);
+            thread->start();
+            QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
+        }
+    }
+}
 void MainWindow::closeCurrentTab() {
     int currentIndex = ui->tabWidget->currentIndex();
     ui->tabWidget->removeTab(currentIndex);
@@ -50,28 +90,6 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-void MainWindow::onOpenButtonClicked()
-{
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open File"), "/home",
-                                                    tr("All Files (*)"));
-    if (!fileName.isEmpty()) {
-        QFileInfo fileInfo(fileName);
-        QString fileExtension = fileInfo.suffix().toLower();
-        if (viewers.contains(fileExtension)) {
-            QWidget *widget = viewers[fileExtension]->view(fileName);
-            if (widget != nullptr) {
-                QWidget *newTab = new QWidget();
-                QVBoxLayout *layout = new QVBoxLayout(newTab);
-                layout->addWidget(widget);
-
-                ui->tabWidget->addTab(newTab, fileInfo.fileName());
-            }
-        }
-    }
-}
-
 
 void MainWindow::keyPressEvent(QKeyEvent *event){
     if(event->modifiers() & Qt::ControlModifier) {

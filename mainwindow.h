@@ -21,12 +21,13 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-     void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 
 public slots:
 
     void onOpenButtonClicked();
     void closeCurrentTab();
+    void addTab(QVariant data, const QString& title,const QString& fileExtension);
 
 private:
     Ui::MainWindow *ui;

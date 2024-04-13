@@ -1,32 +1,43 @@
 #include "csvviewer.h"
 #include <QTableWidget>
 #include <QFile>
+#include <QFileInfo>
 
 //TODO ADD MORE DESIGN PATTERNS
 
-CsvViewer::CsvViewer() {}
-
-QWidget *CsvViewer::view(const QString &fileName)
+void CsvViewer::open(const QString &fileName)
 {
-    // Open the CSV file
     QFile file(fileName);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return nullptr;
+        return;
 
     QTextStream in(&file);
-    QString headerLine = in.readLine(); // Read the first line for headers
-    QStringList headers = headerLine.split(',');
+    QStringList headers = in.readLine().split(',');
 
-    // Create a QTableWidget
-    QTableWidget *tableWidget = new QTableWidget;
-    tableWidget->setColumnCount(headers.size()); // Set the number of columns
-    tableWidget->setHorizontalHeaderLabels(headers); // Set the headers
-
-    // Read the CSV file and populate the table
+    QVariantList rows;
     while (!in.atEnd()) {
         QString line = in.readLine();
         QStringList fields = line.split(',');
+        rows.append(fields);
+    }
 
+    QFileInfo fileInfo(fileName);
+    emit fileOpened(QVariant::fromValue(rows),
+                    fileInfo.fileName(),
+                    fileInfo.suffix().toLower());
+}
+
+QWidget* CsvViewer::display(QVariant data)
+{
+    QVariantList rows = data.toList();
+    QStringList headers = rows.takeFirst().toStringList();
+
+    QTableWidget *tableWidget = new QTableWidget;
+    tableWidget->setColumnCount(headers.size());
+    tableWidget->setHorizontalHeaderLabels(headers);
+
+    for (const QVariant &rowVariant : rows) {
+        QStringList fields = rowVariant.toStringList();
         int row = tableWidget->rowCount();
         tableWidget->insertRow(row);
 
@@ -36,9 +47,10 @@ QWidget *CsvViewer::view(const QString &fileName)
         }
     }
 
-    tableWidget->resizeColumnsToContents(); // Optional: Resize columns to fit content
+    tableWidget->resizeColumnsToContents();
     return tableWidget;
 }
+
 
 CsvViewer &CsvViewer::getInstance()
 {

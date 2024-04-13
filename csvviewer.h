@@ -5,13 +5,16 @@
 
 class CsvViewer: public FileViewer
 {
+    Q_OBJECT
+    CsvViewer() = default;
 public:
     CsvViewer(CsvViewer const&) = delete;
     void operator=(CsvViewer const&) = delete;
-    QWidget* view(const QString& fileName) override;
     static CsvViewer& getInstance();
-private:
-    CsvViewer();
+
+public slots:
+    void open(const QString& fileName) override;
+    QWidget* display(QVariant data) override;
 };
 
 #endif // CSVVIEWER_H

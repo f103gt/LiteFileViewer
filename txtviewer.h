@@ -8,9 +8,12 @@
 #include <QFile>
 
 class TxtViewer : public FileViewer {
+    Q_OBJECT
 public:
     TxtViewer() = default;
-    QWidget* view(const QString& fileName) override;
+public slots:
+    void open(const QString& fileName) override;
+    QWidget* display(QVariant data) override;
 };
 
 #endif // TXTVIEWER_H
