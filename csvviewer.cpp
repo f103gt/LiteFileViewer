@@ -15,6 +15,8 @@ void CsvViewer::open(const QString &fileName)
     QStringList headers = in.readLine().split(',');
 
     QVariantList rows;
+    rows.append(headers);
+
     while (!in.atEnd()) {
         QString line = in.readLine();
         QStringList fields = line.split(',');
@@ -56,4 +58,31 @@ CsvViewer &CsvViewer::getInstance()
 {
     static CsvViewer instance;
     return instance;
+}
+
+void CsvViewer::zoomIn(QWidget *currentTab,double factor)
+{
+    QTableWidget* tableWidget =  currentTab->findChild<QTableWidget*>();
+    if(tableWidget){
+        QFont font = tableWidget->font();
+        font.setPointSizeF(font.pointSizeF() * factor);
+        tableWidget->setFont(font);
+        tableWidget->resizeColumnsToContents();
+    }else {
+        qDebug() << "Failed to find QGraphicsView in current tab";
+    }
+}
+
+void CsvViewer::zoomOut(QWidget *currentTab,double factor)
+{
+    QTableWidget* tableWidget =  currentTab->findChild<QTableWidget*>();
+    if(tableWidget){
+        QFont font = tableWidget->font();
+        font.setPointSizeF(font.pointSizeF() / factor);
+        tableWidget->setFont(font);
+        tableWidget->resizeColumnsToContents();
+    }else{
+        qDebug() << "Failed to find QTableWidget in current tab";
+    }
+
 }

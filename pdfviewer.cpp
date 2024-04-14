@@ -5,7 +5,29 @@
 #include <QGraphicsView>
 #include <QFileInfo>
 #include <QPainter>
+#include <QDebug>
 
+
+void PdfViewer::zoomIn(QWidget *currentTab, double factor)
+{
+    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
+    if (view) {
+        view->scale(factor, factor);
+    } else {
+        qDebug() << "Failed to find QGraphicsView in current tab";
+    }
+}
+
+
+void PdfViewer::zoomOut(QWidget *currentTab, double factor)
+{
+    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
+    if (view) {
+        view->scale(1/factor, 1/factor);
+    } else {
+        qDebug() << "Failed to find QGraphicsView in current tab";
+    }
+}
 
 void PdfViewer::open(const QString &fileName)
 {

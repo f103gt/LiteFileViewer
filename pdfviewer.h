@@ -27,6 +27,8 @@ class PdfViewer: public FileViewer
     Q_OBJECT
 public:
     PdfViewer() = default;
+    void zoomIn(QWidget *currentTab,double factor) override;
+    void zoomOut(QWidget *currentTab,double factor) override;
 public slots:
    void open(const QString& fileName) override;
     QWidget* display(QVariant data) override;

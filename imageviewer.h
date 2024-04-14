@@ -10,6 +10,8 @@ class ImageViewer: public FileViewer
 public:
     ImageViewer() = default;
     ~ImageViewer() = default;
+    void zoomIn(QWidget *currentTab,double factor) override;
+    void zoomOut(QWidget *currentTab,double factor) override;
 public slots:
     void open(const QString& fileName) override;
     QWidget* display(QVariant data) override;

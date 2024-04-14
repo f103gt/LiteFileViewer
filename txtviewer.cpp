@@ -1,6 +1,30 @@
 #include "txtviewer.h"
 #include <QFileInfo>
 
+void TxtViewer::zoomIn(QWidget *currentTab, double factor)
+{
+    QTextEdit* textEdit =  currentTab->findChild<QTextEdit*>();
+    if(textEdit){
+        QFont font = textEdit->font();
+        font.setPointSizeF(font.pointSizeF() * factor);
+        textEdit->setFont(font);
+    }else{
+        qDebug() << "Failed to find QTextEdit in current tab";
+    }
+}
+
+void TxtViewer::zoomOut(QWidget *currentTab, double factor)
+{
+    QTextEdit* textEdit =  currentTab->findChild<QTextEdit*>();
+    if(textEdit){
+        QFont font = textEdit->font();
+        font.setPointSizeF(font.pointSizeF() / factor);
+        textEdit->setFont(font);
+    }else{
+        qDebug() << "Failed to find QTextEdit in current tab";
+    }
+}
+
 void TxtViewer::open(const QString &fileName)
 {
     QFile file(fileName);

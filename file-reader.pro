@@ -18,6 +18,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     pdfviewer.cpp \
+    tabwidget.cpp \
     txtviewer.cpp
 
 HEADERS += \
@@ -26,6 +27,7 @@ HEADERS += \
     imageviewer.h \
     mainwindow.h \
     pdfviewer.h \
+    tabwidget.h \
     txtviewer.h \
     ui_mainwindow.h
 

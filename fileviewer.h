@@ -10,6 +10,8 @@ public:
 public slots:
     virtual void open(const QString& fileName) = 0;
     virtual QWidget* display(QVariant data) = 0;
+    virtual void zoomIn(QWidget *currentTab,double factor) = 0;
+    virtual void zoomOut(QWidget *currentTab,double factor) =0;
 signals:
     void fileOpened(QVariant data, const QString& title,const QString& fileExtension);
 };

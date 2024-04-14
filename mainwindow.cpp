@@ -54,6 +54,7 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
         QVBoxLayout *layout = new QVBoxLayout(newTab);
         layout->addWidget(widget);
 
+        newTab->setProperty("fileExtension", fileExtension);
         ui->tabWidget->addTab(newTab, title);
     }
 }
@@ -91,21 +92,23 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+//TODDO MAYBE REPLACE WITH SHORTCUT
 void MainWindow::keyPressEvent(QKeyEvent *event){
     if(event->modifiers() & Qt::ControlModifier) {
-        QGraphicsView *view = getCurrentTabGraphicsView();
+        QWidget *view = ui->tabWidget->currentWidget();
+
         if(view) {
+            QString fileExtension = view->property("fileExtension").toString();
             if(event->key() == Qt::Key_Plus || event->key()==Qt::Key_Equal) {
-                view->scale(1.2, 1.2);
+                viewers[fileExtension]->zoomIn(view,1.2);
             } else if(event->key() == Qt::Key_Minus) {
-                view->scale(1/1.2, 1/1.2);
+                viewers[fileExtension]->zoomOut(view,1.2);
             }
             ui->zoomLabel->setVisible(true);
             ui->zoomLabel->setText(QString("Zoom: %1%").arg(zoomLevel * 100));
         }
     }
 }
-
 
 
 QGraphicsView* MainWindow::getCurrentTabGraphicsView() const{
