@@ -10,6 +10,7 @@
 #include <QShortcut>
 #include <QThread>
 #include <QLineEdit>
+#include <QSettings>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -31,10 +32,96 @@ MainWindow::MainWindow(QWidget *parent)
         checkTabCount();
     });
 
+    // Initialize recent file actions and connect them to openRecentFile
+    for (int i = 0; i < MaxRecentFiles; ++i) {
+        recentFileActs[i] = ui->recentFileActs[i];
+        connect(recentFileActs[i], &QAction::triggered, this, &MainWindow::openRecentFile);
+    }
+
+    // Load the recent files and update the actions
+    updateRecentFileActions();
 
     ui->stackedWidget->setCurrentWidget(ui->welcomeLabel);
 
 }
+
+void MainWindow::openRecentFile()
+{
+    QAction *action = qobject_cast<QAction *>(sender());
+    if (action)
+    {
+        QString fileName = action->data().toString();
+        // Load the file and set it as the current file
+        loadFile(fileName);
+        setCurrentFile(fileName);
+    }
+}
+
+void MainWindow::loadFile(const QString &fileName)
+{
+    QFileInfo fileInfo(fileName);
+    QString fileExtension = fileInfo.suffix().toLower();
+    if (viewers.contains(fileExtension)) {
+        QThread* thread = new QThread;
+        FileViewer* viewer = viewers[fileExtension];
+        viewer->moveToThread(thread);
+        disconnect(viewer, &FileViewer::fileOpened, this, nullptr);
+
+        connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
+            this->addTab(data, title, fileExtension);
+        });
+
+        connect(thread, &QThread::finished, viewer, &QObject::deleteLater);
+        thread->start();
+        QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
+    }
+}
+
+
+void MainWindow::updateRecentFileActions()
+{
+    QSettings settings("YourCompany", "YourApp");
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        QString text = tr("&%1").arg(files[i]); // Include the full file path
+        recentFileActs[i]->setText(text);
+        recentFileActs[i]->setData(files[i]);
+        recentFileActs[i]->setVisible(true);
+    }
+    for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
+        recentFileActs[j]->setVisible(false);
+}
+
+
+void MainWindow::setCurrentFile(const QString &fileName)
+{
+    curFile = fileName;
+    setWindowModified(false);
+
+    QString shownName = curFile;
+    if (curFile.isEmpty())
+        shownName = "untitled.txt";
+    setWindowFilePath(shownName);
+
+    QSettings settings("YourCompany", "YourApp");
+    QStringList files = settings.value("recentFileList").toStringList();
+    files.removeAll(fileName); // If the file is already in the list, it is removed
+    files.prepend(fileName); // The file is added to the beginning of the list
+    while (files.size() > MaxRecentFiles) // If the list is too big, the last file is removed
+        files.removeLast();
+
+    settings.setValue("recentFileList", files);
+
+    foreach (QWidget *widget, QApplication::topLevelWidgets()) {
+        MainWindow *mainWin = qobject_cast<MainWindow *>(widget);
+        if (mainWin)
+            mainWin->updateRecentFileActions();
+    }
+}
+
 
 void MainWindow::checkTabCount() const
 {
@@ -75,7 +162,6 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
                     connect(pageLineEdit, &QLineEdit::returnPressed, this,[this, pageLineEdit,widget, fileExtension](){
                         int page = pageLineEdit->text().split('/')[0].toInt();
                         auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
-                        qDebug() << "Pixmaps size in addTab: " << pixmaps.size();
                         if (page >= 1 && page <= pixmaps.size()) {
                             viewers[fileExtension]->goToPage(widget,page);
                         } else {
@@ -118,8 +204,11 @@ void MainWindow::onOpenButtonClicked() {
             thread->start();
             QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
         }
+        setCurrentFile(fileName);
     }
 }
+
+
 void MainWindow::closeCurrentTab() {
     int currentIndex = ui->tabWidget->currentIndex();
     ui->tabWidget->removeTab(currentIndex);

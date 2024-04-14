@@ -18,6 +18,7 @@
 #include <QtWidgets/QStackedLayout>
 #include <QFileDialog>
 #include <QStackedWidget>
+#include <array>
 
 
 QT_BEGIN_NAMESPACE
@@ -43,6 +44,10 @@ public:
     QSplitter* splitter;
     QLabel* welcomeLabel;
     QStackedWidget* stackedWidget;
+
+    static const int MaxRecentFiles = 10;
+    std::array<QAction *, MaxRecentFiles> recentFileActs;
+
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -93,6 +98,11 @@ public:
         menuRecentFiles = new QMenu(menuFile);
         menuRecentFiles->setObjectName("menuRecentFiles");
         menuRecentFiles->setTitle(QCoreApplication::translate("MainWindow", "Recent Files", nullptr));
+        for (int i = 0; i < MaxRecentFiles; ++i) {
+            recentFileActs[i] = new QAction(MainWindow);
+            recentFileActs[i]->setVisible(false);
+            menuRecentFiles->addAction(recentFileActs[i]);
+        }
 
         menuFile->addAction(actionOpen);
         menuFile->addAction(actionClose);

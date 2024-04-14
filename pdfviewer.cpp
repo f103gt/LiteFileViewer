@@ -167,8 +167,6 @@ QWidget* PdfViewer::display(QVariant data)
             yOffset += pixmaps[i].height() + 10;
         }
 
-
-        // Emit the pageChanged signal
         emit pageChanged(currentPage, pixmaps.size());
     });
 
