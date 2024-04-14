@@ -1,6 +1,16 @@
 #include "txtviewer.h"
 #include <QFileInfo>
 
+bool TxtViewer::supportsToolbar() const
+{
+    return true;
+}
+
+bool TxtViewer::supportsPagination() const
+{
+    return false;
+}
+
 void TxtViewer::zoomIn(QWidget *currentTab, double factor)
 {
     QTextEdit* textEdit =  currentTab->findChild<QTextEdit*>();
@@ -23,6 +33,11 @@ void TxtViewer::zoomOut(QWidget *currentTab, double factor)
     }else{
         qDebug() << "Failed to find QTextEdit in current tab";
     }
+}
+
+QToolBar *TxtViewer::createToolbar()
+{
+    return nullptr;
 }
 
 void TxtViewer::open(const QString &fileName)

@@ -27,10 +27,14 @@ class PdfViewer: public FileViewer
     Q_OBJECT
 public:
     PdfViewer() = default;
+    bool supportsToolbar() const override;
+    bool supportsPagination() const override;
     void zoomIn(QWidget *currentTab,double factor) override;
     void zoomOut(QWidget *currentTab,double factor) override;
+    QToolBar* createToolbar() override;
+    void goToPage(QWidget *widget,int page) override;
 public slots:
-   void open(const QString& fileName) override;
+    void open(const QString& fileName) override;
     QWidget* display(QVariant data) override;
 };
 

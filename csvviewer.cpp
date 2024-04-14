@@ -60,6 +60,16 @@ CsvViewer &CsvViewer::getInstance()
     return instance;
 }
 
+bool CsvViewer::supportsToolbar() const
+{
+    return true;
+}
+
+bool CsvViewer::supportsPagination() const
+{
+    return false;
+}
+
 void CsvViewer::zoomIn(QWidget *currentTab,double factor)
 {
     QTableWidget* tableWidget =  currentTab->findChild<QTableWidget*>();
@@ -85,4 +95,9 @@ void CsvViewer::zoomOut(QWidget *currentTab,double factor)
         qDebug() << "Failed to find QTableWidget in current tab";
     }
 
+}
+
+QToolBar *CsvViewer::createToolbar()
+{
+    return nullptr;
 }

@@ -43,8 +43,6 @@ public:
     QSplitter* splitter;
     QLabel* welcomeLabel;
     QStackedWidget* stackedWidget;
-    QLabel *zoomLabel;
-    double zoomLevel;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -67,15 +65,6 @@ public:
         welcomeLabel = new QLabel("Welcome! Open a file to get started or use the menu options.");
         welcomeLabel->setObjectName("welcomeLabel");
         welcomeLabel->setAlignment(Qt::AlignCenter);
-
-        zoomLabel = new QLabel(MainWindow);
-        zoomLabel->setObjectName("zoomLabel");
-        zoomLabel->setText("Zoom: 100%");
-        zoomLabel->setVisible(false);
-        verticalLayout->addWidget(zoomLabel);
-
-        zoomLabel->setText(QString("Zoom: %1%").arg(zoomLevel * 100));
-        zoomLabel->update();
 
         verticalLayout->addWidget(welcomeLabel);
 

@@ -5,6 +5,16 @@
 #include <QFileInfo>
 
 
+bool ImageViewer::supportsToolbar() const
+{
+    return true;
+}
+
+bool ImageViewer::supportsPagination() const
+{
+    return false;
+}
+
 void ImageViewer::zoomIn(QWidget *currentTab, double factor)
 {
     QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
@@ -23,6 +33,11 @@ void ImageViewer::zoomOut(QWidget *currentTab, double factor)
     } else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
+}
+
+QToolBar *ImageViewer::createToolbar()
+{
+    return nullptr;
 }
 
 void ImageViewer::open(const QString &fileName)

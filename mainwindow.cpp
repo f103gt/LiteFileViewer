@@ -9,6 +9,7 @@
 #include <QDebug>
 #include <QShortcut>
 #include <QThread>
+#include <QLineEdit>
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -51,7 +52,43 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
     QWidget *widget = viewers[fileExension]->display(data);
     if (widget != nullptr) {
         QWidget *newTab = new QWidget();
+        newTab->setProperty("zoomLevel", 1.0);
         QVBoxLayout *layout = new QVBoxLayout(newTab);
+        if (viewers[fileExension]->supportsToolbar()) {
+            QToolBar *toolbar = viewers[fileExension]->createToolbar();
+            if(toolbar){
+                layout->addWidget(toolbar);
+                connect(viewers[fileExension], &FileViewer::zoomInRequested,this, [this, newTab, fileExtension](double factor) {
+                    viewers[fileExtension]->zoomIn(newTab, factor);
+                });
+                connect(viewers[fileExension], &FileViewer::zoomOutRequested,this, [this, newTab, fileExtension](double factor) {
+                    viewers[fileExtension]->zoomOut(newTab, factor);
+                });
+                if(viewers[fileExension]->supportsPagination()){
+                    QLabel *pageLabel = new QLabel();
+                    toolbar->addWidget(pageLabel);
+                    QLineEdit *pageLineEdit = new QLineEdit();
+                    toolbar->addWidget(pageLineEdit);
+                    connect(viewers[fileExtension], &FileViewer::pageChanged, this,[pageLabel](int currentPage, int totalPages) {
+                        pageLabel->setText(QString("%1/%2").arg(currentPage).arg(totalPages));
+                    });
+                    connect(pageLineEdit, &QLineEdit::returnPressed, this,[this, pageLineEdit,widget, fileExtension](){
+                        int page = pageLineEdit->text().split('/')[0].toInt();
+                        auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
+                        qDebug() << "Pixmaps size in addTab: " << pixmaps.size();
+                        if (page >= 1 && page <= pixmaps.size()) {
+                            viewers[fileExtension]->goToPage(widget,page);
+                        } else {
+                            //TODO HANDLE PROPERLY
+                            qDebug()<<"INVALID PAGE NUMBER\n";
+                        }
+                    });
+
+
+                }
+            }
+
+        }
         layout->addWidget(widget);
 
         newTab->setProperty("fileExtension", fileExtension);
@@ -71,7 +108,8 @@ void MainWindow::onOpenButtonClicked() {
             QThread* thread = new QThread;
             FileViewer* viewer = viewers[fileExtension];
             viewer->moveToThread(thread);
-            // Adjusting the lambda function to match the signal signature
+            disconnect(viewer, &FileViewer::fileOpened, this, nullptr);
+
             connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
                 this->addTab(data, title, fileExtension);
             });
@@ -104,8 +142,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event){
             } else if(event->key() == Qt::Key_Minus) {
                 viewers[fileExtension]->zoomOut(view,1.2);
             }
-            ui->zoomLabel->setVisible(true);
-            ui->zoomLabel->setText(QString("Zoom: %1%").arg(zoomLevel * 100));
         }
     }
 }
