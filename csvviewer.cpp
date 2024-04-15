@@ -78,6 +78,7 @@ void CsvViewer::zoomIn(QWidget *currentTab,double factor)
         font.setPointSizeF(font.pointSizeF() * factor);
         tableWidget->setFont(font);
         tableWidget->resizeColumnsToContents();
+        zoom(currentTab,zoomInCommand.get(),factor);
     }else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
@@ -91,13 +92,10 @@ void CsvViewer::zoomOut(QWidget *currentTab,double factor)
         font.setPointSizeF(font.pointSizeF() / factor);
         tableWidget->setFont(font);
         tableWidget->resizeColumnsToContents();
+        zoom(currentTab,zoomOutCommand.get(),factor);
     }else{
         qDebug() << "Failed to find QTableWidget in current tab";
     }
 
 }
 
-QToolBar *CsvViewer::createToolbar()
-{
-    return nullptr;
-}

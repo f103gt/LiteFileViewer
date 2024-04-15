@@ -26,17 +26,7 @@ void PdfViewer::zoomIn(QWidget *currentTab, double factor)
     QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
     if (view) {
         view->scale(factor, factor);
-        double zoomLevel = currentTab->property("zoomLevel").toDouble() * factor;
-        currentTab->setProperty("zoomLevel", zoomLevel);
-
-        QToolBar *toolbar = currentTab->findChild<QToolBar*>();
-
-        if (toolbar) {
-            QLabel *zoomLabel = toolbar->findChild<QLabel*>("zoomLabel");
-            if (zoomLabel) {
-                zoomLabel->setText(QString("Zoom: %1%").arg(qRound(zoomLevel * 100)));
-            }
-        }
+        zoom(currentTab,zoomInCommand.get(),factor);
     } else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
@@ -48,44 +38,12 @@ void PdfViewer::zoomOut(QWidget *currentTab, double factor)
     QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
     if (view) {
         view->scale(1/factor, 1/factor);
-        double zoomLevel = currentTab->property("zoomLevel").toDouble() / factor;
-        currentTab->setProperty("zoomLevel", zoomLevel);
-        QToolBar *toolbar = currentTab->findChild<QToolBar*>();
-
-        if (toolbar) {
-            QLabel *zoomLabel = toolbar->findChild<QLabel*>("zoomLabel");
-            if (zoomLabel) {
-                zoomLabel->setText(QString("Zoom: %1%").arg(qRound(zoomLevel * 100)));
-            }
-        }
+        zoom(currentTab,zoomOutCommand.get(),factor);
     } else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
 }
 
-QToolBar *PdfViewer::createToolbar()
-{
-    QToolBar *toolbar = new QToolBar();
-    toolbar->setMovable(true);
-
-    QAction *zoomInAction = toolbar->addAction("+");
-    QLabel *zoomLabel = new QLabel("Zoom: 100%");
-    zoomLabel->setObjectName("zoomLabel");
-    toolbar->addWidget(zoomLabel);
-    QAction *zoomOutAction = toolbar->addAction("-");
-
-    // Connect the actions to the zoomIn and zoomOut methods
-    connect(zoomInAction, &QAction::triggered,this, [this]() {
-        emit zoomInRequested(1.2);
-    });
-    connect(zoomOutAction, &QAction::triggered, this,[this]() {
-        emit zoomOutRequested(1.2);
-    });
-    QLabel *pageLabel = new QLabel();
-    toolbar->addWidget(pageLabel);
-
-    return toolbar;
-}
 
 void PdfViewer::goToPage(QWidget *widget, int page)
 {

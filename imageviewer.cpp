@@ -20,6 +20,7 @@ void ImageViewer::zoomIn(QWidget *currentTab, double factor)
     QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
     if (view) {
         view->scale(factor, factor);
+        zoom(currentTab,zoomInCommand.get(),factor);
     } else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
@@ -30,14 +31,10 @@ void ImageViewer::zoomOut(QWidget *currentTab, double factor)
     QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
     if (view) {
         view->scale(1/factor, 1/factor);
+        zoom(currentTab,zoomOutCommand.get(),factor);
     } else {
         qDebug() << "Failed to find QGraphicsView in current tab";
     }
-}
-
-QToolBar *ImageViewer::createToolbar()
-{
-    return nullptr;
 }
 
 void ImageViewer::open(const QString &fileName)

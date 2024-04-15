@@ -1,5 +1,6 @@
 #include "txtviewer.h"
 #include <QFileInfo>
+#include <QLabel>
 
 bool TxtViewer::supportsToolbar() const
 {
@@ -18,6 +19,7 @@ void TxtViewer::zoomIn(QWidget *currentTab, double factor)
         QFont font = textEdit->font();
         font.setPointSizeF(font.pointSizeF() * factor);
         textEdit->setFont(font);
+        zoom(currentTab,zoomInCommand.get(),factor);
     }else{
         qDebug() << "Failed to find QTextEdit in current tab";
     }
@@ -30,14 +32,10 @@ void TxtViewer::zoomOut(QWidget *currentTab, double factor)
         QFont font = textEdit->font();
         font.setPointSizeF(font.pointSizeF() / factor);
         textEdit->setFont(font);
+        zoom(currentTab,zoomOutCommand.get(),factor);
     }else{
         qDebug() << "Failed to find QTextEdit in current tab";
     }
-}
-
-QToolBar *TxtViewer::createToolbar()
-{
-    return nullptr;
 }
 
 void TxtViewer::open(const QString &fileName)

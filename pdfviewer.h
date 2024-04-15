@@ -4,8 +4,9 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QList>
-#include "fileviewer.h"
+#include <fileviewer.h>
 #include <QObject>
+#include <zoomcommand.h>
 
 class DecoratedScene: public QGraphicsScene{
     QGraphicsScene* scene;
@@ -31,7 +32,6 @@ public:
     bool supportsPagination() const override;
     void zoomIn(QWidget *currentTab,double factor) override;
     void zoomOut(QWidget *currentTab,double factor) override;
-    QToolBar* createToolbar() override;
     void goToPage(QWidget *widget,int page) override;
 public slots:
     void open(const QString& fileName) override;

@@ -32,6 +32,9 @@ MainWindow::MainWindow(QWidget *parent)
         checkTabCount();
     });
 
+    // Connect the tab close requested signal to the closeCurrentTab method
+    connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeCurrentTab);
+
     // Initialize recent file actions and connect them to openRecentFile
     for (int i = 0; i < MaxRecentFiles; ++i) {
         recentFileActs[i] = ui->recentFileActs[i];
@@ -51,7 +54,6 @@ void MainWindow::openRecentFile()
     if (action)
     {
         QString fileName = action->data().toString();
-        // Load the file and set it as the current file
         loadFile(fileName);
         setCurrentFile(fileName);
     }
@@ -178,7 +180,12 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
         layout->addWidget(widget);
 
         newTab->setProperty("fileExtension", fileExtension);
-        ui->tabWidget->addTab(newTab, title);
+        // Customize the tab title to include an "X" for the close button
+        QString tabTitle = title + "  X";
+        int tabIndex = ui->tabWidget->addTab(newTab, tabTitle);
+
+        // Set the close button at the end of the tab
+        ui->tabWidget->setTabText(tabIndex, tabTitle);
     }
 }
 

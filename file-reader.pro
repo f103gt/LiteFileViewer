@@ -19,7 +19,8 @@ SOURCES += \
     mainwindow.cpp \
     pdfviewer.cpp \
     tabwidget.cpp \
-    txtviewer.cpp
+    txtviewer.cpp \
+    zoomcommand.cpp
 
 HEADERS += \
     csvviewer.h \
@@ -29,7 +30,8 @@ HEADERS += \
     pdfviewer.h \
     tabwidget.h \
     txtviewer.h \
-    ui_mainwindow.h
+    ui_mainwindow.h \
+    zoomcommand.h
 
 FORMS += \
     mainwindow.ui
