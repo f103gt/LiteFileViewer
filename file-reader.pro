@@ -20,6 +20,7 @@ SOURCES += \
     pdfviewer.cpp \
     tabwidget.cpp \
     txtviewer.cpp \
+    viewerfactory.cpp \
     zoomcommand.cpp
 
 HEADERS += \
@@ -31,6 +32,7 @@ HEADERS += \
     tabwidget.h \
     txtviewer.h \
     ui_mainwindow.h \
+    viewerfactory.h \
     zoomcommand.h
 
 FORMS += \

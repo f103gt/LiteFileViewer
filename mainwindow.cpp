@@ -2,27 +2,23 @@
 #include "ui_mainwindow.h"
 #include <QSharedPointer>
 #include <QKeyEvent>
-#include "txtviewer.h"
-#include "pdfviewer.h"
-#include "csvviewer.h"
-#include "imageviewer.h"
 #include <QDebug>
 #include <QShortcut>
 #include <QThread>
 #include <QLineEdit>
 #include <QSettings>
-
+#include <viewerfactory.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    viewers["txt"] = new TxtViewer;
-    viewers["pdf"] = new PdfViewer;
-    viewers["csv"] = &CsvViewer::getInstance();
-    viewers["jpg"] = new ImageViewer;
-    viewers["png"] = new ImageViewer;
+    viewers["txt"] = ViewerFactory::getInstance().createViewer("txt");
+    viewers["pdf"] = ViewerFactory::getInstance().createViewer("pdf");
+    viewers["csv"] = ViewerFactory::getInstance().createViewer("csv");
+    viewers["jpg"] = ViewerFactory::getInstance().createViewer("jpg");
+    viewers["png"] = ViewerFactory::getInstance().createViewer("png");
 
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenButtonClicked);
 
@@ -32,16 +28,13 @@ MainWindow::MainWindow(QWidget *parent)
         checkTabCount();
     });
 
-    // Connect the tab close requested signal to the closeCurrentTab method
     connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeCurrentTab);
 
-    // Initialize recent file actions and connect them to openRecentFile
     for (int i = 0; i < MaxRecentFiles; ++i) {
         recentFileActs[i] = ui->recentFileActs[i];
         connect(recentFileActs[i], &QAction::triggered, this, &MainWindow::openRecentFile);
     }
 
-    // Load the recent files and update the actions
     updateRecentFileActions();
 
     ui->stackedWidget->setCurrentWidget(ui->welcomeLabel);
@@ -59,8 +52,27 @@ void MainWindow::openRecentFile()
     }
 }
 
-void MainWindow::loadFile(const QString &fileName)
+
+void MainWindow::updateRecentFileActions()
 {
+    QSettings settings("YourCompany", "YourApp");
+    QStringList files = settings.value("recentFileList").toStringList();
+
+    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        QString text = tr("&%1").arg(files[i]);
+        recentFileActs[i]->setText(text);
+        recentFileActs[i]->setData(files[i]);
+        recentFileActs[i]->setVisible(true);
+    }
+    for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
+        recentFileActs[j]->setVisible(false);
+}
+
+
+//TEMPLATE MEHTOD
+void MainWindow::processFile(const QString &fileName) {
     QFileInfo fileInfo(fileName);
     QString fileExtension = fileInfo.suffix().toLower();
     if (viewers.contains(fileExtension)) {
@@ -79,23 +91,20 @@ void MainWindow::loadFile(const QString &fileName)
     }
 }
 
-
-void MainWindow::updateRecentFileActions()
-{
-    QSettings settings("YourCompany", "YourApp");
-    QStringList files = settings.value("recentFileList").toStringList();
-
-    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
-
-    for (int i = 0; i < numRecentFiles; ++i) {
-        QString text = tr("&%1").arg(files[i]); // Include the full file path
-        recentFileActs[i]->setText(text);
-        recentFileActs[i]->setData(files[i]);
-        recentFileActs[i]->setVisible(true);
-    }
-    for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
-        recentFileActs[j]->setVisible(false);
+void MainWindow::loadFile(const QString &fileName) {
+    processFile(fileName);
 }
+
+void MainWindow::onOpenButtonClicked() {
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open File"), "/home",
+                                                    tr("All Files (*)"));
+    if (!fileName.isEmpty()) {
+        processFile(fileName);
+        setCurrentFile(fileName);
+    }
+}
+
 
 
 void MainWindow::setCurrentFile(const QString &fileName)
@@ -110,9 +119,9 @@ void MainWindow::setCurrentFile(const QString &fileName)
 
     QSettings settings("YourCompany", "YourApp");
     QStringList files = settings.value("recentFileList").toStringList();
-    files.removeAll(fileName); // If the file is already in the list, it is removed
-    files.prepend(fileName); // The file is added to the beginning of the list
-    while (files.size() > MaxRecentFiles) // If the list is too big, the last file is removed
+    files.removeAll(fileName);
+    files.prepend(fileName);
+    while (files.size() > MaxRecentFiles)
         files.removeLast();
 
     settings.setValue("recentFileList", files);
@@ -186,32 +195,6 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
 
         // Set the close button at the end of the tab
         ui->tabWidget->setTabText(tabIndex, tabTitle);
-    }
-}
-
-
-void MainWindow::onOpenButtonClicked() {
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                                    tr("Open File"), "/home",
-                                                    tr("All Files (*)"));
-    if (!fileName.isEmpty()) {
-        QFileInfo fileInfo(fileName);
-        QString fileExtension = fileInfo.suffix().toLower();
-        if (viewers.contains(fileExtension)) {
-            QThread* thread = new QThread;
-            FileViewer* viewer = viewers[fileExtension];
-            viewer->moveToThread(thread);
-            disconnect(viewer, &FileViewer::fileOpened, this, nullptr);
-
-            connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
-                this->addTab(data, title, fileExtension);
-            });
-
-            connect(thread, &QThread::finished, viewer, &QObject::deleteLater);
-            thread->start();
-            QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
-        }
-        setCurrentFile(fileName);
     }
 }
 

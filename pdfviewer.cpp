@@ -111,10 +111,8 @@ QWidget* PdfViewer::display(QVariant data)
     widget->setProperty("pixmaps", data);
 
     connect(view->verticalScrollBar(), &QScrollBar::valueChanged, this,[this, view, pixmaps](){
-        // Calculate current scroll position
         int scrollPos = view->verticalScrollBar()->value();
 
-        // Calculate the current page
         int yOffset = 0;
         int currentPage = 0;
         for (int i = 0; i < pixmaps.size(); ++i) {

@@ -20,6 +20,7 @@ public:
 
     //TODO DO I NEED TO USE HERE CONST OR NOT?
     virtual QToolBar* createToolbar(){
+        if(!supportsToolbar()){return nullptr;}
         QToolBar *toolbar = new QToolBar();
         toolbar->setMovable(true);
 

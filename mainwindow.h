@@ -47,6 +47,7 @@ private:
     QGraphicsView*getCurrentTabGraphicsView() const;
     QLabel* getCurrentTabLabel() const;
     void checkTabCount() const;
+    void processFile(const QString& filename);
 
 };
 #endif // MAINWINDOW_H
