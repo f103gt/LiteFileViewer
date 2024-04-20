@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "../headers/mainwindow.h"
+#include "../headers/ui_mainwindow.h"
 #include <QSharedPointer>
 #include <QKeyEvent>
 #include <QDebug>
@@ -7,7 +7,10 @@
 #include <QThread>
 #include <QLineEdit>
 #include <QSettings>
-#include <viewerfactory.h>
+#include <QMessageBox>
+#include <QPushButton>
+#include "../headers/viewerfactory.h"
+#include "../headers/xmlhtmlviewer.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -19,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent)
     viewers["csv"] = ViewerFactory::getInstance().createViewer("csv");
     viewers["jpg"] = ViewerFactory::getInstance().createViewer("jpg");
     viewers["png"] = ViewerFactory::getInstance().createViewer("png");
+    viewers["html"] = new HtmlXmlViewer(new TxtViewer);
 
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenButtonClicked);
 
@@ -73,21 +77,28 @@ void MainWindow::updateRecentFileActions()
 
 //TEMPLATE MEHTOD
 void MainWindow::processFile(const QString &fileName) {
-    QFileInfo fileInfo(fileName);
-    QString fileExtension = fileInfo.suffix().toLower();
-    if (viewers.contains(fileExtension)) {
-        QThread* thread = new QThread;
-        FileViewer* viewer = viewers[fileExtension];
-        viewer->moveToThread(thread);
-        disconnect(viewer, &FileViewer::fileOpened, this, nullptr);
+    try{
+        QFileInfo fileInfo(fileName);
+        QString fileExtension = fileInfo.suffix().toLower();
+        if (viewers.contains(fileExtension)) {
+            QThread* thread = new QThread;
+            FileViewer* viewer = viewers[fileExtension];
+            viewer->moveToThread(thread);
+            disconnect(viewer, &FileViewer::fileOpened, this, nullptr);
 
-        connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
-            this->addTab(data, title, fileExtension);
-        });
+            connect(viewer, &FileViewer::fileOpened, this, [this](const QVariant &data,const QString &title, const QString &fileExtension) {
+                this->addTab(data, title, fileExtension);
+            });
 
-        connect(thread, &QThread::finished, viewer, &QObject::deleteLater);
-        thread->start();
-        QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
+            connect(thread, &QThread::finished, viewer, &QObject::deleteLater);
+            thread->start();
+            QMetaObject::invokeMethod(viewer, "open", Q_ARG(QString, fileName));
+        }
+    }catch(const std::exception& e){
+        QMessageBox::critical(this, "Error", e.what());
+    }//TODO MAYGE EXTRACT THIS CATCH INTO MAIN.cpp?
+    catch(...){
+         QMessageBox::critical(this, "Unknown Error", "An unknown error occurred.");
     }
 }
 
@@ -143,26 +154,32 @@ void MainWindow::checkTabCount() const
 }
 
 
-void MainWindow::addTab(QVariant data, const QString &title,const QString& fileExension)
+//TODO DIVIDE INTO METHODS + ADD TRY CATCH
+
+void MainWindow::addTab(QVariant data, const QString &title,const QString& fileExtension)
 {
-    QFileInfo fileInfo(title);
-    QString fileExtension = fileInfo.suffix().toLower();
-    QWidget *widget = viewers[fileExension]->display(data);
+    if (!viewers.contains(fileExtension)) {
+        qWarning() << "No viewer available for the file extension:" << fileExtension;
+        QMessageBox::warning(this, "Viewer Error", "No viewer available for the selected file type.");
+        return;
+    }
+
+    QWidget *widget = viewers[fileExtension]->display(data);
     if (widget != nullptr) {
         QWidget *newTab = new QWidget();
         newTab->setProperty("zoomLevel", 1.0);
         QVBoxLayout *layout = new QVBoxLayout(newTab);
-        if (viewers[fileExension]->supportsToolbar()) {
-            QToolBar *toolbar = viewers[fileExension]->createToolbar();
+        if (viewers[fileExtension]->supportsToolbar()) {
+            QToolBar *toolbar = viewers[fileExtension]->createToolbar();
             if(toolbar){
                 layout->addWidget(toolbar);
-                connect(viewers[fileExension], &FileViewer::zoomInRequested,this, [this, newTab, fileExtension](double factor) {
+                connect(viewers[fileExtension], &FileViewer::zoomInRequested,this, [this, newTab, fileExtension](double factor) {
                     viewers[fileExtension]->zoomIn(newTab, factor);
                 });
-                connect(viewers[fileExension], &FileViewer::zoomOutRequested,this, [this, newTab, fileExtension](double factor) {
+                connect(viewers[fileExtension], &FileViewer::zoomOutRequested,this, [this, newTab, fileExtension](double factor) {
                     viewers[fileExtension]->zoomOut(newTab, factor);
                 });
-                if(viewers[fileExension]->supportsPagination()){
+                if(viewers[fileExtension]->supportsPagination()){
                     QLabel *pageLabel = new QLabel();
                     toolbar->addWidget(pageLabel);
                     QLineEdit *pageLineEdit = new QLineEdit();
@@ -171,13 +188,17 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
                         pageLabel->setText(QString("%1/%2").arg(currentPage).arg(totalPages));
                     });
                     connect(pageLineEdit, &QLineEdit::returnPressed, this,[this, pageLineEdit,widget, fileExtension](){
-                        int page = pageLineEdit->text().split('/')[0].toInt();
-                        auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
-                        if (page >= 1 && page <= pixmaps.size()) {
-                            viewers[fileExtension]->goToPage(widget,page);
-                        } else {
-                            //TODO HANDLE PROPERLY
-                            qDebug()<<"INVALID PAGE NUMBER\n";
+                        int page = 0;
+                        try{
+                            page = pageLineEdit->text().split('/')[0].toInt();
+                            auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
+                            if (page >= 1 && page <= pixmaps.size()) {
+                                viewers[fileExtension]->goToPage(widget,page);
+                            } else {
+                                throw std::runtime_error("INVALID PAGE NUMBER");
+                            }}catch(const std::exception& e){
+                            qDebug() << "Error in goToPage:" << e.what();
+                            QMessageBox::warning(this, "Page Error", "An error occurred: " + QString::fromStdString(e.what()));
                         }
                     });
 
@@ -189,12 +210,13 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
         layout->addWidget(widget);
 
         newTab->setProperty("fileExtension", fileExtension);
-        // Customize the tab title to include an "X" for the close button
-        QString tabTitle = title + "  X";
-        int tabIndex = ui->tabWidget->addTab(newTab, tabTitle);
 
-        // Set the close button at the end of the tab
-        ui->tabWidget->setTabText(tabIndex, tabTitle);
+        int tabIndex = ui->tabWidget->addTab(newTab, title);
+        ui->tabWidget->setTabsClosable(true);
+        connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeCurrentTab);
+
+
+        ui->tabWidget->setTabText(tabIndex, title);
     }
 }
 
@@ -211,17 +233,20 @@ MainWindow::~MainWindow()
 
 //TODDO MAYBE REPLACE WITH SHORTCUT
 void MainWindow::keyPressEvent(QKeyEvent *event){
+    try{
     if(event->modifiers() & Qt::ControlModifier) {
         QWidget *view = ui->tabWidget->currentWidget();
 
         if(view) {
             QString fileExtension = view->property("fileExtension").toString();
             if(event->key() == Qt::Key_Plus || event->key()==Qt::Key_Equal) {
-                viewers[fileExtension]->zoomIn(view,1.2);
+                viewers[fileExtension]->zoomIn(view,FileViewer::ZOOM_FACTOR);
             } else if(event->key() == Qt::Key_Minus) {
-                viewers[fileExtension]->zoomOut(view,1.2);
+                viewers[fileExtension]->zoomOut(view,FileViewer::ZOOM_FACTOR);
             }
         }
+    }}catch(const std::exception& e){
+         QMessageBox::warning(this, "Zoom Error", e.what());
     }
 }
 

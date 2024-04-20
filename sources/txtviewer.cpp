@@ -1,4 +1,4 @@
-#include "txtviewer.h"
+#include "../headers/txtviewer.h"
 #include <QFileInfo>
 #include <QLabel>
 

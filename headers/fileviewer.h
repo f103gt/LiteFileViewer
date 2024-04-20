@@ -6,41 +6,60 @@
 #include <QToolBar>
 #include <QLabel>
 #include <QScopedPointer>
-#include <zoomcommand.h>
+#include "zoomcommand.h"
 
 class FileViewer : public QObject {
     Q_OBJECT
 public:
+    static constexpr double ZOOM_FACTOR = 1.25;
     virtual ~FileViewer(){};
     virtual bool supportsToolbar() const = 0;
     virtual bool supportsPagination() const = 0;
-    virtual void goToPage(QWidget *widget,int page) {}
+    virtual void goToPage(QWidget *widget,int page) {
+        Q_UNUSED(widget)
+        Q_UNUSED(page)
+    }
     virtual void zoomIn(QWidget *currentTab,double factor) = 0;
     virtual void zoomOut(QWidget *currentTab,double factor) = 0;
 
-    //TODO DO I NEED TO USE HERE CONST OR NOT?
     virtual QToolBar* createToolbar(){
         if(!supportsToolbar()){return nullptr;}
-        QToolBar *toolbar = new QToolBar();
+        auto toolbar = std::make_unique<QToolBar>();
         toolbar->setMovable(true);
 
         QAction *zoomInAction = toolbar->addAction("+");
-        QLabel *zoomLabel = new QLabel("Zoom: 100%");
-        zoomLabel->setObjectName("zoomLabel");
-        toolbar->addWidget(zoomLabel);
-        QAction *zoomOutAction = toolbar->addAction("-");
+        if (!zoomInAction) {
+            throw std::runtime_error("Failed to create zoom in action.");
+        }
 
-        // Connect the actions to the zoomIn and zoomOut methods
+        QLabel *zoomLabel = new QLabel("Zoom: 100%");
+        if (!zoomInAction) {
+            throw std::runtime_error("Failed to create zoom in action.");
+        }
+
+        zoomLabel->setObjectName("zoomLabel");
+
+        toolbar->addWidget(zoomLabel);
+
+        QAction *zoomOutAction = toolbar->addAction("-");
+        if (!zoomOutAction) {
+            throw std::runtime_error("Failed to create zoom out action.");
+        }
+
         connect(zoomInAction, &QAction::triggered,this, [this]() {
-            emit zoomInRequested(1.2);
+            emit zoomInRequested(ZOOM_FACTOR);
         });
         connect(zoomOutAction, &QAction::triggered, this,[this]() {
-            emit zoomOutRequested(1.2);
+            emit zoomOutRequested(ZOOM_FACTOR);
         });
         QLabel *pageLabel = new QLabel();
+        if (!pageLabel) {
+            throw std::runtime_error("Failed to create page label.");
+        }
+
         toolbar->addWidget(pageLabel);
 
-        return toolbar;
+        return toolbar.release();
     }
 protected:
     QScopedPointer<ZoomInCommand> zoomInCommand;
@@ -51,18 +70,22 @@ protected:
     {}
 
     void zoom(QWidget *currentTab, ZoomCommand* command,double factor) {
-        // Common code
         double zoomLevel = currentTab->property("zoomLevel").toDouble();
         zoomLevel = command->calculateZoomLevel(zoomLevel, factor);
         currentTab->setProperty("zoomLevel", zoomLevel);
         QToolBar *toolbar = currentTab->findChild<QToolBar*>();
 
-        if (toolbar) {
-            QLabel *zoomLabel = toolbar->findChild<QLabel*>("zoomLabel");
-            if (zoomLabel) {
-                zoomLabel->setText(QString("Zoom: %1%").arg(qRound(zoomLevel * 100)));
-            }
+        if (!toolbar) {
+            throw std::runtime_error("Failed to find QToolBar in current tab");
         }
+
+        QLabel *zoomLabel = toolbar->findChild<QLabel*>("zoomLabel");
+        if (!zoomLabel) {
+            throw std::runtime_error("Failed to find zoom label in toolbar");
+        }
+
+        zoomLabel->setText(QString("Zoom: %1%").arg(qRound(zoomLevel * 100)));
+
     }
 public slots:
     virtual void open(const QString& fileName) = 0;

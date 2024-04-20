@@ -7,7 +7,7 @@
 #include "imageviewer.h"
 #include <map>
 #include <functional>
-#include <txtviewer.h>
+#include "txtviewer.h"
 
 
 class SingletonManager {

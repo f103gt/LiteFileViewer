@@ -4,9 +4,8 @@
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>
 #include <QList>
-#include <fileviewer.h>
+#include "fileviewer.h"
 #include <QObject>
-#include <zoomcommand.h>
 
 class DecoratedScene: public QGraphicsScene{
     QGraphicsScene* scene;
@@ -26,6 +25,7 @@ public:
 class PdfViewer: public FileViewer
 {
     Q_OBJECT
+    const int PAGE_SERAPARATOR = 10;
 public:
     PdfViewer() = default;
     bool supportsToolbar() const override;

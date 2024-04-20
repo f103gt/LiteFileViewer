@@ -1,4 +1,4 @@
-#include "imageviewer.h"
+#include "../headers/imageviewer.h"
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QGraphicsPixmapItem>

@@ -13,27 +13,29 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    csvviewer.cpp \
-    imageviewer.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    pdfviewer.cpp \
-    tabwidget.cpp \
-    txtviewer.cpp \
-    viewerfactory.cpp \
-    zoomcommand.cpp
+    sources/csvviewer.cpp \
+    sources/imageviewer.cpp \
+    sources/main.cpp \
+    sources/mainwindow.cpp \
+    sources/pdfviewer.cpp \
+    sources/tabwidget.cpp \
+    sources/txtviewer.cpp \
+    sources/viewerfactory.cpp \
+    sources/xmlhtmlviewer.cpp \
+    sources/zoomcommand.cpp
 
 HEADERS += \
-    csvviewer.h \
-    fileviewer.h \
-    imageviewer.h \
-    mainwindow.h \
-    pdfviewer.h \
-    tabwidget.h \
-    txtviewer.h \
-    ui_mainwindow.h \
-    viewerfactory.h \
-    zoomcommand.h
+    headers/csvviewer.h \
+    headers/fileviewer.h \
+    headers/imageviewer.h \
+    headers/mainwindow.h \
+    headers/pdfviewer.h \
+    headers/tabwidget.h \
+    headers/txtviewer.h \
+    headers/ui_mainwindow.h \
+    headers/viewerfactory.h \
+    headers/xmlhtmlviewer.h \
+    headers/zoomcommand.h
 
 FORMS += \
     mainwindow.ui

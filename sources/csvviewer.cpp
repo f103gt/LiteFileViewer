@@ -1,4 +1,4 @@
-#include "csvviewer.h"
+#include "../headers/csvviewer.h"
 #include <QTableWidget>
 #include <QFile>
 #include <QFileInfo>
