@@ -22,29 +22,6 @@ bool PdfViewer::supportsPagination() const
     return true;
 }
 
-void PdfViewer::zoomIn(QWidget *currentTab, double factor)
-{
-    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
-    if (!view) {
-        throw std::runtime_error("Failed to find QGraphicsView in current tab");
-    }
-    view->scale(factor, factor);
-    zoom(currentTab,zoomInCommand.get(),factor);
-
-}
-
-
-void PdfViewer::zoomOut(QWidget *currentTab, double factor)
-{
-    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
-    if (!view) {
-        throw std::runtime_error("Failed to find QGraphicsView in current tab");
-    }
-
-    view->scale(1/factor, 1/factor);
-    zoom(currentTab,zoomOutCommand.get(),factor);
-}
-
 void PdfViewer::goToPage(QWidget *widget, int page)
 {
     auto view = widget->property("view").value<QGraphicsView*>();
@@ -124,10 +101,8 @@ QWidget* PdfViewer::display(QVariant data)
         throw std::runtime_error("Failed to create QGraphicsView");
     }
 
-    DecoratedScene decoratedScene(scene);
 
     int yOffset = 0;
-    CompositeItem compositeItem;
     for (const QPixmap &pixmap : pixmaps) {
         if (pixmap.isNull()) {
             throw std::runtime_error("Invalid QPixmap found in the list");
@@ -142,7 +117,7 @@ QWidget* PdfViewer::display(QVariant data)
 
         yOffset += pixmap.height() + PAGE_SERAPARATOR;
     }
-    compositeItem.drawItems(&decoratedScene);
+
 
     QWidget *widget = new QWidget;
     QVBoxLayout *layout = new QVBoxLayout(widget);
@@ -172,22 +147,3 @@ QWidget* PdfViewer::display(QVariant data)
     return widget;
 }
 
-
-DecoratedScene::DecoratedScene(QGraphicsScene *scene) :scene(scene){}
-
-void DecoratedScene::addItem(QGraphicsPixmapItem *item)
-{
-    scene->addItem(item);
-}
-
-void CompositeItem::add(QGraphicsPixmapItem *item)
-{
-    items.append(item);
-}
-
-void CompositeItem::drawItems(DecoratedScene *scene)
-{
-    for (auto item : items) {
-        scene->addItem(item);
-    }
-}

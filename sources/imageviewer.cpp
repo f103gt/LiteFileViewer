@@ -15,28 +15,6 @@ bool ImageViewer::supportsPagination() const
     return false;
 }
 
-void ImageViewer::zoomIn(QWidget *currentTab, double factor)
-{
-    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
-    if (view) {
-        view->scale(factor, factor);
-        zoom(currentTab,zoomInCommand.get(),factor);
-    } else {
-        qDebug() << "Failed to find QGraphicsView in current tab";
-    }
-}
-
-void ImageViewer::zoomOut(QWidget *currentTab, double factor)
-{
-    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
-    if (view) {
-        view->scale(1/factor, 1/factor);
-        zoom(currentTab,zoomOutCommand.get(),factor);
-    } else {
-        qDebug() << "Failed to find QGraphicsView in current tab";
-    }
-}
-
 void ImageViewer::open(const QString &fileName)
 {
     QPixmap pixmap(fileName);
@@ -49,6 +27,10 @@ void ImageViewer::open(const QString &fileName)
 
 QWidget* ImageViewer::display(QVariant data)
 {
+    if (!data.canConvert<QPixmap>()) {
+        throw std::runtime_error("Failed to convert data to QPixmap");
+    }
+
     QPixmap pixmap = data.value<QPixmap>();
     QGraphicsView *view = new QGraphicsView;
     QGraphicsScene *scene = new QGraphicsScene;
