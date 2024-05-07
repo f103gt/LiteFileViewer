@@ -6,6 +6,7 @@
 #include <QMap>
 #include <QLabel>
 #include "fileviewer.h"
+#include <QSplitter>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,6 +24,9 @@ class MainWindow : public QMainWindow
     void setCurrentFile(const QString &fileName);
     void loadFile(const QString &fileName);
 
+    QSplitter* currentSplitter = nullptr;
+    Qt::Orientation lastSplitOrientation = Qt::Horizontal;
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -30,7 +34,6 @@ public:
     void keyPressEvent(QKeyEvent *event);
 
     void updateRecentFileActions();
-
 
 public slots:
 
@@ -48,6 +51,7 @@ private:
     QLabel* getCurrentTabLabel() const;
     void checkTabCount() const;
     void processFile(const QString& filename);
+    void split(Qt::Orientation orientation);
 
 };
 #endif // MAINWINDOW_H

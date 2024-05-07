@@ -1,3 +1,9 @@
 #include "../headers/zoomcommand.h"
+double ZoomOutCommand::calculateZoomLevel(double currentZoomLevel, double factor){
+    return currentZoomLevel / factor;
+}
 
-//ZoomCommand::ZoomCommand() {}
+
+double ZoomInCommand::calculateZoomLevel(double currentZoomLevel, double factor){
+    return currentZoomLevel * factor;
+}

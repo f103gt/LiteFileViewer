@@ -5,6 +5,25 @@
 #include <QFileInfo>
 
 
+void ImageBasedViewer::zoomIn(QWidget *currentTab, double factor){
+    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
+    if (!view) {
+        throw std::runtime_error("Failed to find QGraphicsView in current tab");
+    }
+    view->scale(factor, factor);
+    zoom(currentTab,zoomInCommand.get(),factor);
+
+}
+
+void ImageBasedViewer::zoomOut(QWidget *currentTab, double factor){
+    QGraphicsView* view = currentTab->findChild<QGraphicsView*>();
+    if (!view) {
+        throw std::runtime_error("Failed to find QGraphicsView in current tab");
+    }
+    view->scale(1/factor, 1/factor);
+    zoom(currentTab,zoomOutCommand.get(),factor);
+}
+
 bool ImageViewer::supportsToolbar() const
 {
     return true;

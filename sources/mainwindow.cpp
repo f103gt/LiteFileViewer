@@ -9,8 +9,8 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QTextEdit>
 #include "../headers/viewerfactory.h"
-#include "../headers/xmlhtmlviewer.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,11 +18,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     viewers["txt"] = ViewerFactory::getInstance().createViewer("txt");
+    viewers["sql"] = ViewerFactory::getInstance().createViewer("sql");
+    viewers["xml"] = ViewerFactory::getInstance().createViewer("xml");
+    viewers["html"] = ViewerFactory::getInstance().createViewer("html");
+    viewers["json"] = ViewerFactory::getInstance().createViewer("json");
     viewers["pdf"] = ViewerFactory::getInstance().createViewer("pdf");
     viewers["csv"] = ViewerFactory::getInstance().createViewer("csv");
     viewers["jpg"] = ViewerFactory::getInstance().createViewer("jpg");
     viewers["png"] = ViewerFactory::getInstance().createViewer("png");
-    viewers["html"] = new HtmlXmlViewer(new TxtViewer);
 
     connect(ui->actionOpen, &QAction::triggered, this, &MainWindow::onOpenButtonClicked);
 
@@ -98,7 +101,7 @@ void MainWindow::processFile(const QString &fileName) {
         QMessageBox::critical(this, "Error", e.what());
     }//TODO MAYGE EXTRACT THIS CATCH INTO MAIN.cpp?
     catch(...){
-         QMessageBox::critical(this, "Unknown Error", "An unknown error occurred.");
+        QMessageBox::critical(this, "Unknown Error", "An unknown error occurred.");
     }
 }
 
@@ -169,54 +172,111 @@ void MainWindow::addTab(QVariant data, const QString &title,const QString& fileE
         QWidget *newTab = new QWidget();
         newTab->setProperty("zoomLevel", 1.0);
         QVBoxLayout *layout = new QVBoxLayout(newTab);
-        if (viewers[fileExtension]->supportsToolbar()) {
-            QToolBar *toolbar = viewers[fileExtension]->createToolbar();
-            if(toolbar){
-                layout->addWidget(toolbar);
-                connect(viewers[fileExtension], &FileViewer::zoomInRequested,this, [this, newTab, fileExtension](double factor) {
-                    viewers[fileExtension]->zoomIn(newTab, factor);
+        QToolBar *toolbar = viewers[fileExtension]->createToolbar();
+        if(toolbar){
+            layout->addWidget(toolbar);
+            connect(viewers[fileExtension], &FileViewer::zoomInRequested,this, [this, newTab, fileExtension](double factor) {
+                viewers[fileExtension]->zoomIn(newTab, factor);
+            });
+            connect(viewers[fileExtension], &FileViewer::zoomOutRequested,this, [this, newTab, fileExtension](double factor) {
+                viewers[fileExtension]->zoomOut(newTab, factor);
+            });
+            if(viewers[fileExtension]->supportsPagination()){
+                QLabel *pageLabel = new QLabel();
+                toolbar->addWidget(pageLabel);
+                QLineEdit *pageLineEdit = new QLineEdit();
+                toolbar->addWidget(pageLineEdit);
+                connect(viewers[fileExtension], &FileViewer::pageChanged, this,[pageLabel](int currentPage, int totalPages) {
+                    pageLabel->setText(QString("%1/%2").arg(currentPage).arg(totalPages));
                 });
-                connect(viewers[fileExtension], &FileViewer::zoomOutRequested,this, [this, newTab, fileExtension](double factor) {
-                    viewers[fileExtension]->zoomOut(newTab, factor);
+                connect(pageLineEdit, &QLineEdit::returnPressed, this,[this, pageLineEdit,widget, fileExtension](){
+                    int page = 0;
+                    try{
+                        page = pageLineEdit->text().split('/')[0].toInt();
+                        auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
+                        if (page >= 1 && page <= pixmaps.size()) {
+                            viewers[fileExtension]->goToPage(widget,page);
+                        } else {
+                            throw std::runtime_error("INVALID PAGE NUMBER");
+                        }}catch(const std::exception& e){
+                        qDebug() << "Error in goToPage:" << e.what();
+                        QMessageBox::warning(this, "Page Error", "An error occurred: " + QString::fromStdString(e.what()));
+                    }
                 });
-                if(viewers[fileExtension]->supportsPagination()){
-                    QLabel *pageLabel = new QLabel();
-                    toolbar->addWidget(pageLabel);
-                    QLineEdit *pageLineEdit = new QLineEdit();
-                    toolbar->addWidget(pageLineEdit);
-                    connect(viewers[fileExtension], &FileViewer::pageChanged, this,[pageLabel](int currentPage, int totalPages) {
-                        pageLabel->setText(QString("%1/%2").arg(currentPage).arg(totalPages));
+
+            }else if(viewers[fileExtension]->supportsSearch()){
+                QLineEdit *searchLineEdit = new QLineEdit();
+                toolbar->addWidget(searchLineEdit);
+                QPushButton *searchButton = new QPushButton("Search");
+                toolbar->addWidget(searchButton);
+
+                QPushButton *nextButton = new QPushButton("<");
+                toolbar->addWidget(nextButton);
+                QPushButton *prevButton = new QPushButton(">");
+                toolbar->addWidget(prevButton);
+
+                connect(searchButton, &QPushButton::clicked, this, [searchLineEdit,newTab](bool){
+                    QTextEdit* textEdit = newTab->findChild<QTextEdit*>();
+                    QString searchText = searchLineEdit->text();
+                    if (!searchText.isEmpty() && textEdit) {
+                        QList<QTextEdit::ExtraSelection> extraSelections;
+                        textEdit->moveCursor(QTextCursor::Start);
+                        QColor color(255, 255, 0, 127);
+
+                        bool found = false;
+                        while (textEdit->find(searchText)) {
+                            found = true;
+                            QTextEdit::ExtraSelection extra;
+                            extra.format.setBackground(color);
+                            extra.cursor = textEdit->textCursor();
+                            extraSelections.append(extra);
+                        }
+
+                        textEdit->setExtraSelections(extraSelections);
+                        if (found) {
+                            // Scroll to the first occurrence
+                            textEdit->moveCursor(QTextCursor::Start);
+                            textEdit->find(searchText);
+                        }
+                    }
+                });
+
+
+                connect(nextButton, &QPushButton::clicked, this, [searchLineEdit,newTab]{
+                    QTextEdit* textEdit = newTab->findChild<QTextEdit*>();
+                        QString searchText = searchLineEdit->text();
+                        if (!searchText.isEmpty() && textEdit) {
+                            textEdit->find(searchText);
+                        }
                     });
-                    connect(pageLineEdit, &QLineEdit::returnPressed, this,[this, pageLineEdit,widget, fileExtension](){
-                        int page = 0;
-                        try{
-                            page = pageLineEdit->text().split('/')[0].toInt();
-                            auto pixmaps = widget->property("pixmaps").value<QList<QPixmap>>();
-                            if (page >= 1 && page <= pixmaps.size()) {
-                                viewers[fileExtension]->goToPage(widget,page);
-                            } else {
-                                throw std::runtime_error("INVALID PAGE NUMBER");
-                            }}catch(const std::exception& e){
-                            qDebug() << "Error in goToPage:" << e.what();
-                            QMessageBox::warning(this, "Page Error", "An error occurred: " + QString::fromStdString(e.what()));
+
+                connect(prevButton, &QPushButton::clicked, this, [searchLineEdit,newTab]{
+                    QTextEdit* textEdit = newTab->findChild<QTextEdit*>();
+                        QString searchText = searchLineEdit->text();
+                        if (!searchText.isEmpty() && textEdit) {
+                            textEdit->find(searchText, QTextDocument::FindBackward);
                         }
                     });
 
 
-                }
             }
 
         }
+
         layout->addWidget(widget);
 
         newTab->setProperty("fileExtension", fileExtension);
 
         int tabIndex = ui->tabWidget->addTab(newTab, title);
+
         ui->tabWidget->setTabsClosable(true);
-        connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::closeCurrentTab);
 
+        connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, [this,&tabIndex]() {
+                ui->tabWidget->removeTab(tabIndex);
+            });
 
-        ui->tabWidget->setTabText(tabIndex, title);
+         ui->tabWidget->setTabText(tabIndex, title);
+
     }
 }
 
@@ -234,19 +294,19 @@ MainWindow::~MainWindow()
 //TODDO MAYBE REPLACE WITH SHORTCUT
 void MainWindow::keyPressEvent(QKeyEvent *event){
     try{
-    if(event->modifiers() & Qt::ControlModifier) {
-        QWidget *view = ui->tabWidget->currentWidget();
+        if(event->modifiers() & Qt::ControlModifier) {
+            QWidget *view = ui->tabWidget->currentWidget();
 
-        if(view) {
-            QString fileExtension = view->property("fileExtension").toString();
-            if(event->key() == Qt::Key_Plus || event->key()==Qt::Key_Equal) {
-                viewers[fileExtension]->zoomIn(view,FileViewer::ZOOM_FACTOR);
-            } else if(event->key() == Qt::Key_Minus) {
-                viewers[fileExtension]->zoomOut(view,FileViewer::ZOOM_FACTOR);
+            if(view) {
+                QString fileExtension = view->property("fileExtension").toString();
+                if(event->key() == Qt::Key_Plus || event->key()==Qt::Key_Equal) {
+                    viewers[fileExtension]->zoomIn(view,FileViewer::ZOOM_FACTOR);
+                } else if(event->key() == Qt::Key_Minus) {
+                    viewers[fileExtension]->zoomOut(view,FileViewer::ZOOM_FACTOR);
+                }
             }
-        }
-    }}catch(const std::exception& e){
-         QMessageBox::warning(this, "Zoom Error", e.what());
+        }}catch(const std::exception& e){
+        QMessageBox::warning(this, "Zoom Error", e.what());
     }
 }
 
@@ -259,6 +319,10 @@ QGraphicsView* MainWindow::getCurrentTabGraphicsView() const{
     QGraphicsView *view = currentTab->findChild<QGraphicsView *>();
     return view;
 }
+
+
+
+
 
 
 

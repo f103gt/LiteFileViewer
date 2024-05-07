@@ -14,6 +14,8 @@ CONFIG += c++17
 
 SOURCES += \
     sources/csvviewer.cpp \
+    sources/fileviewer.cpp \
+    sources/highlightstrategy.cpp \
     sources/imageviewer.cpp \
     sources/main.cpp \
     sources/mainwindow.cpp \
@@ -21,12 +23,12 @@ SOURCES += \
     sources/tabwidget.cpp \
     sources/txtviewer.cpp \
     sources/viewerfactory.cpp \
-    sources/xmlhtmlviewer.cpp \
     sources/zoomcommand.cpp
 
 HEADERS += \
     headers/csvviewer.h \
     headers/fileviewer.h \
+    headers/highlightstrategy.h \
     headers/imageviewer.h \
     headers/mainwindow.h \
     headers/pdfviewer.h \
@@ -34,7 +36,6 @@ HEADERS += \
     headers/txtviewer.h \
     headers/ui_mainwindow.h \
     headers/viewerfactory.h \
-    headers/xmlhtmlviewer.h \
     headers/zoomcommand.h
 
 FORMS += \
@@ -51,4 +52,5 @@ RESOURCES += \
 
 DISTFILES += \
     .gitignore \
-    README.md
+    README.md \
+    config.qdocconf

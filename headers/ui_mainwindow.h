@@ -31,7 +31,7 @@ public:
     QAction *actionRecentFiles;
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
-     QVBoxLayout *centerLayout;
+    QVBoxLayout *centerLayout;
     QTabWidget *tabWidget;
     QWidget *tab;
     QWidget *widget;
@@ -40,10 +40,10 @@ public:
     QMenuBar *menubar;
     QMenu *menuFile;
     QMenu *menuRecentFiles;
-    QStatusBar *statusbar;
     QSplitter* splitter;
     QLabel* welcomeLabel;
     QStackedWidget* stackedWidget;
+
 
     static const int MaxRecentFiles = 10;
     std::array<QAction *, MaxRecentFiles> recentFileActs;
@@ -67,7 +67,7 @@ public:
         actionRecentFiles = new QAction(MainWindow);
         actionRecentFiles->setObjectName("actionRecentFiles");
 
-        welcomeLabel = new QLabel("Welcome! Open a file to get started or use the menu options.");
+        welcomeLabel = new QLabel("Ctrl+O Open new file\nCtrl+W Close current file\nCtrl+ (Ctrl=) Zoom In\nCtrl- Zoom Out");
         welcomeLabel->setObjectName("welcomeLabel");
         welcomeLabel->setAlignment(Qt::AlignCenter);
 
@@ -143,5 +143,3 @@ QT_END_NAMESPACE
 
 #endif // UI_MAINWINDOW_H
 
-
-//TODO REMOVE ACTION COMPRESS

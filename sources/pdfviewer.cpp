@@ -103,6 +103,7 @@ QWidget* PdfViewer::display(QVariant data)
 
 
     int yOffset = 0;
+
     for (const QPixmap &pixmap : pixmaps) {
         if (pixmap.isNull()) {
             throw std::runtime_error("Invalid QPixmap found in the list");

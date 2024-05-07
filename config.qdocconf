@@ -1,0 +1,18 @@
+# Project Information
+project = ZoomCommand
+description = Simple file reader that supports pdf, xtx, json, sql, html, xml, png and jpg formats.
+
+# Input Directories
+sourcedirs =  ./sources
+headerdirs = ./headers
+
+
+headers.fileextensions = "*.h *.ch *.h++ *.hh *.hpp *.hxx"
+# File Extensions to Process
+sources.fileextensions = "*.cpp *.qdoc *.mm *.qml"
+
+
+# Output Directory and Format
+outputdir = D:/Qt/projects/file-reader/docs
+outputformats = HTML DocBook
+

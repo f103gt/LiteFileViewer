@@ -1,7 +1,3 @@
 <RCC>
-    <qresource prefix="/image">
-        <file>compress-file.png</file>
-        <file>file-converter.png</file>
-        <file>read-file.png</file>
-    </qresource>
+    <qresource prefix="/image"/>
 </RCC>
