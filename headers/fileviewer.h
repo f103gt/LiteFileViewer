@@ -12,7 +12,9 @@
  \\class FileViewer
 \\brief The FileViewer class provides an abstract base class for file viewers.
 
-FileViewer is an abstract base class that defines the interface for file viewers in the Lite File Viewer application. It uses the Template Method design pattern where the `zoom` method is the template method and the `zoomIn` and `zoomOut` methods are the primitive operations.
+FileViewer is an abstract base class that defines the interface for file viewers in the Lite File Viewer application.
+It uses the Template Method design pattern where the `zoom` method is the template method and the `zoomIn` and `zoomOut`
+methods are the primitive operations.
 
 \\sa ZoomInCommand, ZoomOutCommand
 */
