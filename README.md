@@ -1,6 +1,5 @@
-# Lab 1
-Unit tests are located in ./tests. To find the uml diagrams, follow to ./diagrams. There implemented 4 of them -
-Use Case, Class, Activity.
+# Lab 1 (6 uml Diagrams)
+There implemented 4 of them - Use Case, Class, Activity for Lite File Viewer. 
 
 Also I made a great use of one of my previous pojects located in this repository https://github.com/f103gt/bookstore.git.
 This project implements books microservice using instead of rest controllers, gRpc services to establish inter process
